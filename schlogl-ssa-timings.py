@@ -100,7 +100,7 @@ def simulate_schlogl_ssa_fixed_times(
     return X_hist, save_at_ts
 
 
-def time_paths(Npaths: int, T: float, css: np.array):
+def time_paths(Npaths: int, T: float, css: np.array, V : np.array):
     low_times = np.zeros((Npaths,))
     high_times = np.zeros((Npaths,))
 
@@ -163,9 +163,12 @@ def xp1():
     T = 50
     rs, V, css = define_system()
     Npaths = 500
-    low, high = time_paths(Npaths, T, css)
-    print(low.mean())
-    print(high.mean())
+    low, high = time_paths(Npaths, T, css, V)
+
+    fname=f"dat/schlogl/times-ssa"
+    np.save(fname+"-low", low)
+    np.save(fname+"-high", high)
+
 
 
 # TODO finish
@@ -197,4 +200,5 @@ def xp4(gen_dat=True):
 
 
 if __name__ == "__main__":
-    dat = xp4(gen_dat=True)
+    xp1()
+    #dat = xp4(gen_dat=True)

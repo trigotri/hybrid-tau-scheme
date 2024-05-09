@@ -9,12 +9,29 @@ from numba import jit
 from tqdm import tqdm
 
 
-def define_xp4_params():
+# def define_xp4_params_old():
+# 
+#     T = 50
+#     N = int(1e6)
+#     TSSs = ((1e-2, 1e-2), (3e-2, 1e-2))
+#     ISs = ((35, 45), (50, 200), (205, 300), (210, 220))
+# 
+#     TSSs = ((1e-1,5e-3), )
+#     ISs = ((50, 80), )
+# 
+#     return T, N, TSSs, ISs
+
+
+def define_xp1_params():
 
     T = 50
     N = int(1e6)
-    TSSs = ((1e-2, 1e-3), (0.25, 0.25))
-    ISs = ((35, 45), (50, 200), (205, 300), (210, 220))
+
+    TSSs = ((1e-2, 5e-3), (1e-2, 1e-2), (1e-2, 2e-3), (1e-2, 1e-2))
+    ISs =  ((40, 80)    , (20, 40),     (50, 200),    (40, 100))
+
+    TSSs += ((0.25, 5e-3), (0.25, 1e-2), (0.25, 2e-3), (0.25, 1e-2))
+    ISs +=  ((40, 80)    , (20, 40),     (50, 200),    (40, 100))
 
     return T, N, TSSs, ISs
 
@@ -131,7 +148,7 @@ def simulate_schlogl_htau(
     while t < T:
         prop_fun(props, X, css)
         compute_betas(betas, X, I1, I2)
-        X, t = cs.hybrid1_tau_step_numba(X, t, V, props, props, betas, delta_t, Delta_t)
+        X, t = cs.hybrid1_tau_step_numba(X, t, V, props, betas, delta_t, Delta_t)
         X_hist.append(X)
         t_hist.append(t)
 
@@ -199,6 +216,7 @@ def time_paths(
     I2: float,
     delta_t: float,
     Delta_t: float,
+    V : np.array
 ):
     low_times = np.zeros((Npaths,))
     high_times = np.zeros((Npaths,))
@@ -237,16 +255,19 @@ def generate_npath_fig(show=True):
 
 def mini_xp_1():
 
-    T = int(1e6)
+    T = 50.
     rs, V, css = define_system()
-    delta_t, Delta_t = 1e-2, 1e-3
+    delta_t, Delta_t = 5e-2, 1e-2
     I1, I2 = 35.0, 45.0
-    save_at_ts = np.arange(0, T, 50)
-    X_hist, t_hist = simulate_schlogl_htau_fixed_times(
-        T, V, css, I1, I2, delta_t, Delta_t, save_at_ts
-    )
+    #save_at_ts = np.arange(0, T, 50)
+    # X_hist, t_hist = simulate_schlogl_htau_fixed_times(
+    #     T, V, css, I1, I2, delta_t, Delta_t, save_at_ts
+    # )
+    X_hist, t_hist = simulate_schlogl_htau(T, V, css, I1, I2, delta_t, Delta_t)
 
-    plt.plot(t_hist, X_hist)
+    plt.plot(t_hist, np.array(X_hist))
+    plt.hlines(I1, t_hist[0], t_hist[-1], 'r')
+    plt.hlines(I2, t_hist[0], t_hist[-1], 'r')
     plt.show()
 
 
@@ -265,28 +286,92 @@ def generate_Npaths_final_time(N, T, V, css, TSS, IS):
 def xp4(gen_dat=True):
 
     rs, V, css = define_system()
-    T, N, TSSs, ISs = define_xp4_params()
+    T, N, TSSs, ISs = define_xp1_params()
 
-    for i, TSS in enumerate(TSSs):
-        for j, IS in enumerate(ISs):
+    for i,zp in enumerate(zip(ISs, TSSs)):
+        IS, TSS = zp
 
-            fname = f"dat/final-times-hybridtau-TSS{i}-IS{j}.npy"
-            dat = (
-                generate_Npaths_final_time(N, T, V, css, TSS, IS) if gen_dat else np.load(fname)
-            )
-            np.save(fname, dat) if gen_dat else None
+        fname = f"dat/schlogl/final-times-hybridtau-params{i}.npy"
+        dat = (
+            generate_Npaths_final_time(N, T, V, css, TSS, IS) if gen_dat else np.load(fname)
+        )
+        np.save(fname, dat) if gen_dat else None
 
 
-def xp1():
+# def xp1_old():
+# 
+#     T, N, TSSs, ISs = define_xp4_params()
+#     rs, V, css = define_system()
+#     Npaths = 500
+# 
+#     prog = tqdm(total=len(ISs) * len(TSSs))
+#     for i,(I1,I2) in enumerate(ISs):
+#         for j,(delta_t, Delta_t) in enumerate(TSSs):
+#             prog.update(1)
+#             fname = f"dat/schlogl/times-htau-IS{i}-TS{j}"
+#             low, high = time_paths(Npaths, T, css, I1, I2, delta_t, Delta_t, V)
+# 
+#             np.save(fname+"-low", low)
+#             np.save(fname+"-high", high)
+
+
+def xp1_mod():
+
+    T, N, TSSs, ISs = define_xp1_params()
+    rs, V, css = define_system()
+    Npaths = 1000
+
+    prog = tqdm(total=len(ISs))
+    for i,zp in enumerate(zip(ISs, TSSs)):
+        (I1,I2), (delta_t, Delta_t) = zp
+        prog.update(1)
+        fname = f"dat/schlogl/times-htau-params{i}"
+        low, high = time_paths(Npaths, T, css, I1, I2, delta_t, Delta_t, V)
+
+        np.save(fname+"-low", low)
+        np.save(fname+"-high", high)
+
+
+def xp5():
 
     T = 50
-    rs, V, css = define_system()
-    delta_t, Delta_t = 1e-2, 1e-3
-    I1, I2 = 35.0, 45.0
-    Npaths = 500
-    low, high = time_paths(Npaths, T, css, I1, I2, delta_t, Delta_t)
-    print(low.mean())
-    print(high.mean())
+    N = int(1e6)
+    TSSs = ((1e-2, 1e-2), (3e-2, 1e-2))
+    ISs = ((35, 45), (50, 200), (205, 300), (210, 220))
+
+    S = np.arange(2, 700)
+
+    prog = tqdm(total=len(ISs) * len(TSSs))
+    for i,(I1,I2) in enumerate(ISs):
+        for j,(delta_t, Delta_t) in enumerate(TSSs):
+            prog.update(1)
+
+
+
+def test(I1 : float, I2 : float):
+    rv,V,css = define_system()
+    X = np.zeros((1,))
+    props = np.zeros((4,))
+    betas = np.zeros((4,))
+    xs = np.arange(2,800)
+    prop_sum = np.zeros_like(xs)
+    eff_sums1 = np.zeros_like(xs)
+    eff_sums2 = np.zeros_like(xs)
+    for i,x in enumerate(xs):
+        prop_fun(props, np.array([x]), css)
+        compute_betas(betas, np.array([x]), I1, I2)
+        prop_sum[i] = np.sum(props)
+        eff_sums1[i] = np.sum(props * betas)
+
+    plt.plot(xs, 1/prop_sum)
+    plt.plot(xs, 1/eff_sums1)
+    plt.vlines(I1, 1e-3, 0.1)
+    plt.vlines(I2, 1e-3, 0.1)
+    plt.yscale('log')
+    plt.grid()
+    plt.show()
 
 if __name__ == "__main__":
+    xp1_mod()
     xp4(gen_dat=True)
+    #xp1()

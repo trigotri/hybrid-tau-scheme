@@ -202,7 +202,7 @@ def hybrid1_tau_step(X,t,V,propensity_f, beta_f, delta_t, Delta_t):
     return new_X, new_t
 
 @jit(nopython=True)
-def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t):
+def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
     '''
     First running version of the Hybrid-tau (numba-compatible).
     Props are the already-computed propensities.
@@ -224,15 +224,18 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t):
 
         xi1, xi2 = np.random.rand(2)
         tau = -np.log(xi2)/a0_prime if a0_prime > 0 else Delta_t
+        print(tau) if verbose else None
 
         props_tau =  (1.-beta)*props
         if tau < Delta_t:
+            print("blocking") if verbose else None
             j = np.argmax(xi1<np.cumsum(props_ssa/a0_prime))
             new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, tau)
             new_X = new_X + V[:,j]
 
         else:
             new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, Delta_t) ## check this guy
+            print("skipping") if verbose else None
 
     return new_X, new_t
 
