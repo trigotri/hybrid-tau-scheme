@@ -5,6 +5,8 @@ import time
 import sys
 from numba import jit
 import matplotlib.pyplot as plt
+import time
+import tqdm
 
 def define_system():
     A, B = ['A'], ['B']
@@ -47,6 +49,29 @@ def simulate_lv_ssa(T : float, V : np.array, ks : np.array, save_at_ts : np.arra
 
     return X_hist, save_at_ts
 
+def record_times_ssa(T : float, V : np.array, ks : np.array, save_at_ts : np.array):
+
+    props = np.zeros((3,))
+    X = np.array([50.,60.])
+    t = 0.
+
+    times = np.zeros(save_at_ts.size)
+
+    prop_fun(props, X, ks)
+    cs.ssa_prop_step(X, t, V, props)
+
+    i = 0
+    t0 = time.time()
+    while t < T:
+        prop_fun(props, X, ks)
+        X,t = cs.ssa_prop_step(X, t, V, props)
+
+        while i < save_at_ts.size and save_at_ts[i] <= t :
+           times[i] = time.time() - t0
+           i+=1
+
+    return times
+
 def single_launch():
     rs,V,ks = define_system()
     T = 6.
@@ -72,9 +97,31 @@ def MC_xp():
 
     return dat,save_at_ts
 
+def time_lv():
+
+    N = int(1e4)
+    rs,V,ks = define_system()
+    T = 6.
+    numsteps = 50
+
+    save_at_ts = np.linspace(1,T,numsteps, endpoint=True)
+
+    time_dat = np.zeros((N,save_at_ts.size))
+
+
+    cs.ssa_prop_step(np.ones(2), 0., V, np.ones(3))
+
+    for i in tqdm.tqdm(range(N)):
+        time_dat[i] = record_times_ssa(T, V, ks, save_at_ts)
+
+    np.save('dat/lv/ssa-times', time_dat)
+    np.save('dat/lv/ssa-save-times', save_at_ts)
+
+
+
 def save_MC_dat(dat : np.array):
     np.save(f'lv/ssa-{dat.shape[0]}-{dat.shape[1]}', dat)
 
 if __name__ == '__main__':
-    dat,save_at_ts = MC_xp()
-    save_MC_dat(dat)
+    # single_launch()
+    time_dat = time_lv()

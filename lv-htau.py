@@ -5,6 +5,7 @@ import time
 import sys
 from numba import jit
 import matplotlib.pyplot as plt
+import tqdm
 
 ## set reactions
 
@@ -111,8 +112,65 @@ def MC_xp():
 def save_MC_dat(dat : np.array):
     np.save(f'lv/htau-{dat.shape[0]}-{dat.shape[1]}', dat)
 
+
+def record_times_htau(T : float, V : np.array, ks : np.array, save_at_ts : np.array, I1A : float, I2A : float, I1B : float, I2B : float, delta_t : float, Delta_t : float):
+
+    props = np.zeros((3,))
+    betas = np.zeros((3,))
+
+    X = np.array([50.,60.])
+    t = 0.
+
+    prop_fun(props, X, ks)
+    compute_betas(betas, X, I1A, I2A, I1B, I2B)
+    cs.hybrid1_tau_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+
+    times = np.zeros(save_at_ts.size)
+
+    t0 = time.time()
+    i = 0
+    while t < T:
+        prop_fun(props, X, ks)
+        compute_betas(betas, X, I1A, I2A, I1B, I2B)
+        X,t = cs.hybrid1_tau_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+
+        while i < save_at_ts.size and save_at_ts[i] <= t :
+           times[i] = time.time() - t0
+           i+=1
+
+    return times
+
+
+def time_lv():
+
+    N = int(1e4)
+    rs,V,ks = define_system()
+    T = 6.
+    numsteps = 50
+
+    save_at_ts = np.linspace(1,T,numsteps, endpoint=True)
+
+    Delta_t = 1e-2
+    delta_t = 3e-2
+
+    IS = ((10,15), (15,20),(20,25))
+
+
+
+    for j,(I1,I2) in enumerate(IS):
+        time_dat = np.zeros((N,save_at_ts.size))
+        for i in tqdm.tqdm(range(N)):
+            time_dat[i] = record_times_htau(T, V, ks, save_at_ts,I1, I2, I1, I2, delta_t, Delta_t)
+
+        np.save(f'dat/lv/htau-times-{j}', time_dat)
+        np.save(f'dat/lv/htau-save-times-{j}', save_at_ts)
+
+    return time_dat
+
+
 if __name__ == '__main__':
+    time_lv()
     #single_launch()
-    dat,save_at_ts = MC_xp()
+    #dat,save_at_ts = MC_xp()
     #plt.plot(save_at_ts, dat.mean(axis=0)); plt.yscale('log'); plt.show()
-    save_MC_dat(dat)
+    # save_MC_dat(dat)
