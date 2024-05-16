@@ -148,8 +148,6 @@ def generate_npath_fig(show=True):
         plt.show()
 
 
-# TODO a routine for simulating a lot of paths at time $T$ for different choices of time steps and ISS -- hopefully not too long
-# new interval sets : (35,45), (45, 170), (200,210),(200,300)
 def generate_Npaths_final_time(N: int, T: float, V: np.array, css: tuple):
 
     dat = np.zeros((N,1), dtype=np.short)
@@ -171,7 +169,6 @@ def xp1():
 
 
 
-# TODO finish
 def xp2():
     T = 1e6
     rs, V, css = define_system()

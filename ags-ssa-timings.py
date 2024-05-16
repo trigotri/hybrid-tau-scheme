@@ -38,7 +38,7 @@ def define_system():
 def prop_fun(props: np.array, X: np.array, css: np.array):
     c1, c2, c3, c4, c5, c6 = css
 
-    DNA, DNA0, P, mRNA= X  # TODO check tuple unpacking + valid order
+    DNA, DNA0, P, mRNA= X
     props[0] = c1 * DNA
     props[1] = c2 * mRNA
     props[2] = c3 * DNA * P
