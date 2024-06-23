@@ -7,3 +7,6 @@ Those files are then typically executed as
 python num_realisations proc_id xp_arg1 xp_arg2 ...
 ```
 
+The remaining files were run on a laptop, and can be run as
+```python filename.py
+after commenting in/out the relevant functions in ```__main__``` part of the script. 

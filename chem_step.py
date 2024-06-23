@@ -57,7 +57,7 @@ def tau_leap_step(X,t,V,propensity_f,tau):
     return X, new_t
 
 @jit(nopython=True)
-def tau_leap_step_prop(X : np.array,t : float,V : np.array, a : np.array, tau :float) -> list[np.array, float]:
+def tau_leap_step_prop(X : np.array,t : float,V : np.array, a : np.array, tau :float):
 
     pjs = np.zeros((len(a),)) ### this wordy expansion to make it numba-compatible
     atau = a * tau
@@ -224,28 +224,29 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
         xi1, xi2 = np.random.rand(2)
         tau = -np.log(xi2)/a0_prime if a0_prime > 0 else Delta_t
-        print(tau) if verbose else None
+        #print(tau) if verbose else None
 
         props_tau =  (1.-beta)*props
         if tau < Delta_t:
-            print("blocking") if verbose else None
+            #print("blocking") if verbose else None
             j = np.argmax(xi1<np.cumsum(props_ssa/a0_prime))
             new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, tau)
             new_X = new_X + V[:,j]
 
         else:
-            new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, Delta_t) ## check this guy
-            print("skipping") if verbose else None
+            new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, Delta_t)
+            #print("skipping") if verbose else None
 
     return new_X, new_t
 
 
 @jit(nopython=True)
-def hybrid1_cle_step_numba(X,t,V, props, props_rint, beta, delta_t, Delta_t):
+def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
     '''
-    First running version of the Hybrid-tau (numba-compatible).
+    First running version of the Hybrid-CLE (numba-compatible).
     Props are the already-computed propensities.
     '''
+    props_rint = np.rint(props)
 
     # Tau leap
     if np.amax(beta) == 0:
@@ -268,11 +269,10 @@ def hybrid1_cle_step_numba(X,t,V, props, props_rint, beta, delta_t, Delta_t):
         if tau < Delta_t:
             j = np.argmax(xi1<np.cumsum(props_ssa/a0_prime))
             new_X, new_t = cle_step_numba(X, t, V, props_cle, tau) # if somwething goes wrong, it is here...
-
             new_X = new_X + V[:,j]
 
         else:
-            new_X, new_t = cle_step_numba(X, t, V, props_cle, Delta_t) ## check this guy
+            new_X, new_t = cle_step_numba(X, t, V, props_cle, Delta_t)
 
     return new_X, new_t
 
