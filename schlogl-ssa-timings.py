@@ -114,7 +114,7 @@ def time_paths(Npaths: int, T: float, css: np.array, V : np.array):
         if X < 300 and i < Npaths:
             low_times[i] = t1 - t0
             i += 1
-        elif j < Npaths:
+        elif X > 300 and j < Npaths:
             high_times[j] = t1 - t0
             j += 1
 
@@ -160,7 +160,7 @@ def generate_Npaths_final_time(N: int, T: float, V: np.array, css: tuple):
 def xp1():
     T = 50
     rs, V, css = define_system()
-    Npaths = 500
+    Npaths = 1000
     low, high = time_paths(Npaths, T, css, V)
 
     fname=f"dat/schlogl/times-ssa"

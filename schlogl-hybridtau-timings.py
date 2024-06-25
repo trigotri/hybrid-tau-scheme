@@ -231,7 +231,7 @@ def time_paths(
         if X < 300 and i < Npaths:
             low_times[i] = t1 - t0
             i += 1
-        elif j < Npaths:
+        elif X > 300 and j < Npaths:
             high_times[j] = t1 - t0
             j += 1
 
@@ -373,5 +373,5 @@ def test(I1 : float, I2 : float):
 
 if __name__ == "__main__":
     xp1_mod()
-    xp4(gen_dat=True)
+    #xp4(gen_dat=True)
     #xp1()
