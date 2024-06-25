@@ -176,6 +176,21 @@ def simulate_extinction_time_tau(V : np.array, css : tuple, delta_t : float):
 
     return t
 
+
+@jit(nopython=True)
+def simulate_extinction_time_cle(V : np.array, css : tuple, delta_t : float):
+    props = np.zeros((2,))
+    K, c1 = css
+
+    X = np.array([float(c1)])
+    t = 0.0
+
+    while X[0] > 0:
+        prop_fun(props, X, css)
+        X,t = cs.cle_step_numba(X, t, V, props, delta_t)
+
+    return t
+
 @jit(nopython=True)
 def simulate_extinction_time_ht(V : np.array, css : tuple, I1 : float, I2 : float, delta_t : float, Delta_t : float):
 
@@ -234,6 +249,19 @@ def compute_extinction_times_npaths_tau(npaths: int, css: np.array, V : np.array
     t0 = time.time()
     for i in tqdm.tqdm(range(npaths)):
         extinction_times[i] = simulate_extinction_time_tau(V, css, delta_t)
+    t1 = time.time()
+
+    return extinction_times, t1-t0
+
+
+def compute_extinction_times_npaths_cle(npaths: int, css: np.array, V : np.array, delta_t : float):
+
+    extinction_times = np.zeros((npaths,))
+    simulate_extinction_time_cle(V, css, delta_t)
+
+    t0 = time.time()
+    for i in tqdm.tqdm(range(npaths)):
+        extinction_times[i] = simulate_extinction_time_cle(V, css, delta_t)
     t1 = time.time()
 
     return extinction_times, t1-t0
@@ -335,7 +363,10 @@ if __name__ == "__main__":
 
     compute_data = False
 
+    names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
+
     rs, V, css = define_system(K, c1)
+    ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
     if compute_data:
         ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
         ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
@@ -343,53 +374,66 @@ if __name__ == "__main__":
         ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(npaths, css, V, I1, I2, delta_t, Delta_t)
 
 
-        for ET,t,name in zip([ET_ssa, ET_ht, ET_tau, ET_hcle], [t_ssa, t_ht, t_tau, t_hcle], ["SSA", "H-tau", "Tau-L", "H-CLE"]):
+        for ET,t,name in zip([ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle], [t_ssa, t_ht, t_tau, t_hcle, t_cle], names_algs):
             np.save(f"./dat/{name}-ET", ET)
             np.save(f"./dat/{name}-t", np.array([t]))
 
     ETs = []
-    for name in ["SSA", "H-tau", "Tau-L", "H-CLE"]:
+    ts = []
+    for name in names_algs:
         ETs.append(np.load(f"./dat/{name}-ET.npy"))
+        ts.append(np.load(f"./dat/{name}-t.npy"))
 
-    ET_ssa = np.log(ETs[0])
-    ET_tau = np.log(ETs[2])
-    ET_ht = np.log(ETs[1])
-    ET_hcle = np.log(ETs[3])
+    ET_ssa = ETs[0]
+    ET_tau = ETs[2]
+    ET_ht = ETs[1]
+    ET_hcle = ETs[3]
+    ET_cle = ETs[4]
+    
+    t_ssa = ts[0][0]
+    t_tau = ts[2][0]
+    t_ht = ts[1][0]
+    t_hcle = ts[3][0]
+    t_cle = ts[4][0]
+
 
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
 
     plt.figure()
-    plt.hist(ET_tau, bins=1000, histtype="step",  density=True, cumulative=True)
-    plt.hist(ET_ssa, bins=1000, histtype="step", density=True, cumulative=True)
-    plt.hist(ET_ht, bins=1000, histtype="step", density=True, cumulative=True)
-    plt.hist(ET_hcle, bins=1000, histtype="step", density=True, cumulative=True)
-    #for m,c,la in zip( [ET_ssa.mean(), ET_ht.mean(), ET_tau.mean(), ET_hcle.mean()], colors[:4], ["SSA", "H-$\\tau$", "$\\tau$-leap", "H-CLE"]):
-    #    plt.vlines(m, ymin=0, ymax=5e-4, colors=c, label=la)
-    plt.legend()
-    #plt.xscale('log')
+    plt.hist(np.log(ET_ssa), bins=1000, histtype="step", range=[-np.log(10), 4.7*np.log(10)], density=True, cumulative=True)
+    plt.hist(np.log(ET_ht), bins=1000, histtype="step", range=[-np.log(10), 4.7*np.log(10)], density=True, cumulative=True)
+    plt.hist(np.log(ET_tau), bins=1000, histtype="step", range=[-np.log(10), 4.7*np.log(10)], density=True, cumulative=True)
+    plt.hist(np.log(ET_hcle), bins=1000, histtype="step", range=[-np.log(10), 4.7*np.log(10)], density=True, cumulative=True)
+    plt.hist(np.log(ET_cle), bins=1000, histtype="step", range=[-np.log(10), 4.7*np.log(10)], density=True, cumulative=True)
+    K = 5
+    xticks = [k*np.log(10) for k in range(-1, K)] ; xticks_labels = ["$10^{"+str(k)+"}$" for k in range(-1, K)]
+    plt.xticks(xticks, labels=xticks_labels)
+    plt.xlabel("MET")
+    plt.xlim([-1.01 * np.log(10), 4.69 * np.log(10)])
+    plt.legend(names_algs, loc="upper left")
+    plt.tight_layout()
     plt.savefig("./dat/met-densities.pdf", format='pdf')
-    plt.show()
+    #plt.show()
 
     # start time-scale at 10^{-1}, tau step
     # for consistency, have added corrections to Fig 3 & 4
     # add CLE, add one more figure
 
-    exit()
-
-
     plt.figure()
     plt.scatter(np.sort(ET_ssa), np.sort(ET_ht), label="H-$\\tau$")
     plt.scatter(np.sort(ET_ssa), np.sort(ET_tau), label="$\\tau$-leap")
     plt.scatter(np.sort(ET_ssa), np.sort(ET_hcle), label="H-CLE")
+    plt.scatter(np.sort(ET_ssa), np.sort(ET_cle), label="CLE")
     plt.plot(np.sort(ET_ssa), np.sort(ET_ssa))
-    plt.title("QQ-plot")
+    #plt.title("QQ-plot")
     plt.xlabel("SSA") ; plt.ylabel("Comparing methods")
     plt.legend()
     plt.tight_layout()
     plt.savefig("./dat/met-qq.pdf", format='pdf')
     #plt.show()
 
-    print("Alg.\tMean\t\tStd\t\tAvg sim. time\tRatio SSA")
-    for ET,t,na in zip( [ET_ssa, ET_ht, ET_tau, ET_hcle], [t_ssa, t_ht, t_tau, t_hcle], ["SSA", "H-tau", "Tau-L", "H-CLE"]):
-        print(f"{na}\t{ET.mean():5e}\t{ET.std():5e}\t{t/npaths:5e}\t{t_ssa/t:<5g}")
+    if True:
+        print("Alg.\tMean\t\tStd\t\tAvg sim. time\tRatio SSA")
+        for ET,t,na in zip( [ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle], [t_ssa, t_ht, t_tau, t_hcle, t_cle], ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]):
+            print(f"{na}\t{ET.mean():5e}\t{ET.std():5e}\t{t/npaths:5e}\t{t_ssa/t:<5g}")

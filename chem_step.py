@@ -218,7 +218,6 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
     # jump-tau-leap
     else:
-
         props_ssa = beta * props ## need to make sure this guy makes what it claims it does
         a0_prime = np.sum(props_ssa)
 
@@ -248,7 +247,7 @@ def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
     '''
     props_rint = np.rint(props)
 
-    # Tau leap
+    # CLE step
     if np.amax(beta) == 0:
         new_X, new_t = cle_step_numba(X, t, V, props, delta_t)
 
@@ -258,7 +257,6 @@ def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
 
     # jump-tau-leap
     else:
-
         props_ssa = beta * props_rint ## need to make sure this guy makes what it claims it does
         a0_prime = np.sum(props_ssa)
 
