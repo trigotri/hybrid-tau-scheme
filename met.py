@@ -333,32 +333,49 @@ if __name__ == "__main__":
     I1 = 5
     I2 = 7
 
+    compute_data = False
+
     rs, V, css = define_system(K, c1)
-    ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
-    ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
-    ET_ht, t_ht = compute_extinction_times_npaths_htau(npaths, css, V, I1, I2, delta_t, Delta_t)
-    ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(npaths, css, V, I1, I2, delta_t, Delta_t)
+    if compute_data:
+        ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
+        ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
+        ET_ht, t_ht = compute_extinction_times_npaths_htau(npaths, css, V, I1, I2, delta_t, Delta_t)
+        ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(npaths, css, V, I1, I2, delta_t, Delta_t)
 
 
-    for ET,t,name in zip([ET_ssa, ET_ht, ET_tau, ET_hcle], [t_ssa, t_ht, t_tau, t_hcle], ["SSA", "H-tau", "Tau-L", "H-CLE"]):
-        np.save(f"./dat/{name}-ET", ET)
-        np.save(f"./dat/{name}-t", np.array([t]))
+        for ET,t,name in zip([ET_ssa, ET_ht, ET_tau, ET_hcle], [t_ssa, t_ht, t_tau, t_hcle], ["SSA", "H-tau", "Tau-L", "H-CLE"]):
+            np.save(f"./dat/{name}-ET", ET)
+            np.save(f"./dat/{name}-t", np.array([t]))
 
+    ETs = []
+    for name in ["SSA", "H-tau", "Tau-L", "H-CLE"]:
+        ETs.append(np.load(f"./dat/{name}-ET.npy"))
 
+    ET_ssa = np.log(ETs[0])
+    ET_tau = np.log(ETs[2])
+    ET_ht = np.log(ETs[1])
+    ET_hcle = np.log(ETs[3])
 
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
 
     plt.figure()
-    plt.hist(ET_ssa, bins=50, density=True, alpha=.3)
-    plt.hist(ET_ht, bins=50, density=True, alpha=.3)
-    plt.hist(ET_tau, bins=50, density=True, alpha=.3)
-    plt.hist(ET_hcle, bins=50, density=True, alpha=.3)
-    for m,c,la in zip( [ET_ssa.mean(), ET_ht.mean(), ET_tau.mean(), ET_hcle.mean()], colors[:4], ["SSA", "H-$\\tau$", "$\\tau$-leap", "H-CLE"]):
-        plt.vlines(m, ymin=0, ymax=5e-4, colors=c, label=la)
+    plt.hist(ET_tau, bins=1000, histtype="step",  density=True, cumulative=True)
+    plt.hist(ET_ssa, bins=1000, histtype="step", density=True, cumulative=True)
+    plt.hist(ET_ht, bins=1000, histtype="step", density=True, cumulative=True)
+    plt.hist(ET_hcle, bins=1000, histtype="step", density=True, cumulative=True)
+    #for m,c,la in zip( [ET_ssa.mean(), ET_ht.mean(), ET_tau.mean(), ET_hcle.mean()], colors[:4], ["SSA", "H-$\\tau$", "$\\tau$-leap", "H-CLE"]):
+    #    plt.vlines(m, ymin=0, ymax=5e-4, colors=c, label=la)
     plt.legend()
+    #plt.xscale('log')
     plt.savefig("./dat/met-densities.pdf", format='pdf')
-    #plt.show()
+    plt.show()
+
+    # start time-scale at 10^{-1}, tau step
+    # for consistency, have added corrections to Fig 3 & 4
+    # add CLE, add one more figure
+
+    exit()
 
 
     plt.figure()
