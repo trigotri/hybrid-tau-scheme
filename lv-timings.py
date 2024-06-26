@@ -5,7 +5,7 @@ plt.rcParams.update({"font.size": 14})
 
 
 names = ["ssa", "tau", "cle", "htau", "hcle"]
-labels = ["SSA", "Tau-L", "CLE", "H-t", "H-CLE"]
+labels = ["SSA", "$\\tau$-leap", "CLE", "H $\\tau$", "H CLE"]
 lss = ["--", "-", "--", "-", "--"]
 
 for name,label,ls in zip(names, labels, lss):
@@ -13,7 +13,6 @@ for name,label,ls in zip(names, labels, lss):
     save_times= np.load(f"./dat/{name}-save-times.npy")
 
     plt.plot(save_times, dat.mean(axis=0), ls, label=label)
-
 
 plt.plot(save_times, 1e-4 * save_times, '--', alpha=.4, label='$\\mathcal{O}(t)$')
 plt.legend()

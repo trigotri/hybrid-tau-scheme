@@ -122,7 +122,7 @@ def MC_xp():
     N = 10000
     rs, V, ks = define_system()
     I1A, I2A, I1B, I2B = 5, 10, 5, 10
-    delta_t, Delta_t = 1e-2, 1e-3
+    delta_t = 1e-2
     T = 6.0
     numsteps = 7
     # save_at_ts = np.linspace(0,T,numsteps)

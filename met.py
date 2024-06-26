@@ -417,6 +417,7 @@ if __name__ == "__main__":
     compute_data = False
 
     names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
+    labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
 
     rs, V, css = define_system(K, c1)
     if compute_data:
@@ -508,7 +509,7 @@ if __name__ == "__main__":
     plt.xticks(xticks, labels=xticks_labels)
     plt.xlabel("Extinction time CDF")
     plt.xlim([-1.01 * np.log(10), 4.69 * np.log(10)])
-    plt.legend(names_algs, loc="upper left")
+    plt.legend(labels_algs, loc="upper left")
     plt.tight_layout()
     plt.savefig("./dat/met-densities.pdf", format="pdf")
     # plt.show()
@@ -519,15 +520,15 @@ if __name__ == "__main__":
 
     indxs = [k for k in range(0, npaths, 1)]
     plt.figure()
-    plt.scatter(np.sort(ET_ssa), np.sort(ET_ht), label="H-$\\tau$")
+    plt.scatter(np.sort(ET_ssa), np.sort(ET_ht), label="H $\\tau$")
     plt.scatter(np.sort(ET_ssa), np.sort(ET_tau), label="$\\tau$-leap")
-    plt.scatter(np.sort(ET_ssa), np.sort(ET_hcle), label="H-CLE")
+    plt.scatter(np.sort(ET_ssa), np.sort(ET_hcle), label="H CLE")
     plt.scatter(np.sort(ET_ssa), np.sort(ET_cle), label="CLE")
     plt.plot(np.sort(ET_ssa), np.sort(ET_ssa), label="SSA")
     #plt.title("QQ-plot")
     plt.xlabel("SSA empirical quantiles")
     plt.ylabel("Empirical quantiles")
-    plt.xticks(range(5000, 30001, 5000), labels=[f"${k}$" for k in range(5, 31, 5)])
+    #plt.xticks(range(5000, 30001, 5000), labels=[f"${k}$" for k in range(5, 31, 5)])
     plt.legend()
     plt.tight_layout()
     plt.savefig("./dat/met-qq.png", format="png")

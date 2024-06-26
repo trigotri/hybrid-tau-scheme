@@ -151,7 +151,7 @@ def time_lv():
     save_at_ts = np.linspace(1,T,numsteps, endpoint=True)
 
     Delta_t = 1e-2
-    delta_t = 3e-2
+    delta_t = 1e-2
 
     I1,I2 = (20,25)
 
