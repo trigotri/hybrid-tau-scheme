@@ -110,7 +110,7 @@ def MC_xp():
     return dat,save_at_ts
 
 def save_MC_dat(dat : np.array):
-    np.save(f'lv/htau-{dat.shape[0]}-{dat.shape[1]}', dat)
+    np.save(f'dat/htau-{dat.shape[0]}-{dat.shape[1]}', dat)
 
 
 def record_times_htau(T : float, V : np.array, ks : np.array, save_at_ts : np.array, I1A : float, I2A : float, I1B : float, I2B : float, delta_t : float, Delta_t : float):
@@ -153,24 +153,22 @@ def time_lv():
     Delta_t = 1e-2
     delta_t = 3e-2
 
-    IS = ((10,15), (15,20),(20,25))
+    I1,I2 = (20,25)
 
 
+    time_dat = np.zeros((N,save_at_ts.size))
+    for i in tqdm.tqdm(range(N)):
+        time_dat[i] = record_times_htau(T, V, ks, save_at_ts, I1, I2, I1, I2, delta_t, Delta_t)
 
-    for j,(I1,I2) in enumerate(IS):
-        time_dat = np.zeros((N,save_at_ts.size))
-        for i in tqdm.tqdm(range(N)):
-            time_dat[i] = record_times_htau(T, V, ks, save_at_ts,I1, I2, I1, I2, delta_t, Delta_t)
-
-        np.save(f'dat/lv/htau-times-{j}', time_dat)
-        np.save(f'dat/lv/htau-save-times-{j}', save_at_ts)
+    np.save(f'dat/htau-times', time_dat)
+    np.save(f'dat/htau-save-times', save_at_ts)
 
     return time_dat
 
 
 if __name__ == '__main__':
-    time_lv()
+    #time_lv()
     #single_launch()
     #dat,save_at_ts = MC_xp()
-    #plt.plot(save_at_ts, dat.mean(axis=0)); plt.yscale('log'); plt.show()
-    # save_MC_dat(dat)
+    #save_MC_dat(dat)
+    time_lv()

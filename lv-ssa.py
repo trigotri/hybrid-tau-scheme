@@ -2,7 +2,6 @@ import numpy as np
 import chem_utils as cu
 import chem_step as cs
 import time
-import sys
 from numba import jit
 import matplotlib.pyplot as plt
 import time
@@ -105,23 +104,22 @@ def time_lv():
     numsteps = 50
 
     save_at_ts = np.linspace(1,T,numsteps, endpoint=True)
-
     time_dat = np.zeros((N,save_at_ts.size))
-
 
     cs.ssa_prop_step(np.ones(2), 0., V, np.ones(3))
 
     for i in tqdm.tqdm(range(N)):
         time_dat[i] = record_times_ssa(T, V, ks, save_at_ts)
 
-    np.save('dat/lv/ssa-times', time_dat)
-    np.save('dat/lv/ssa-save-times', save_at_ts)
+    np.save('dat/ssa-times', time_dat)
+    np.save('dat/ssa-save-times', save_at_ts)
 
 
 
 def save_MC_dat(dat : np.array):
-    np.save(f'lv/ssa-{dat.shape[0]}-{dat.shape[1]}', dat)
+    np.save(f'dat/ssa-{dat.shape[0]}-{dat.shape[1]}', dat)
 
 if __name__ == '__main__':
-    # single_launch()
-    time_dat = time_lv()
+    #dat, save_at_ts = MC_xp()
+    #save_MC_dat(dat)
+    time_lv()

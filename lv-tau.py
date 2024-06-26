@@ -34,7 +34,7 @@ def prop_fun(props: np.array, X: np.array, ks: np.array):
 
 
 @jit(nopython=True)
-def simulate_lv_cle(
+def simulate_lv_tau(
     T: float, V: np.array, ks: np.array, save_at_ts: np.array, delta_t: float
 ):
 
@@ -47,7 +47,7 @@ def simulate_lv_cle(
     i = 0
     while t < T:
         prop_fun(props, X, ks)
-        X, t = cs.cle_step_nb_refl(X, t, V, props, delta_t)
+        X, t = cs.tau_step_nb_refl(X, t, V, props, delta_t)
 
         while save_at_ts[i] <= t and i < save_at_ts.size:
             X_hist[i] = X
@@ -62,13 +62,13 @@ def single_launch():
     save_at_ts = np.linspace(0, T, 1000)
     I1A, I2A, I1B, I2B = 5, 10, 5, 10
     delta_t, Delta_t = 1e-2, 1e-3
-    X_hist, t_hist = simulate_lv_cle(T, V, ks, save_at_ts, delta_t)
+    X_hist, t_hist = simulate_lv_tau(T, V, ks, save_at_ts, delta_t)
 
     plt.plot(t_hist, X_hist, "-o")
     plt.show()
 
 
-def record_times_cle(T : float, V : np.array, ks : np.array, save_at_ts : np.array, delta_t : float):
+def record_times_tau(T : float, V : np.array, ks : np.array, save_at_ts : np.array, delta_t : float):
 
     props = np.zeros((3,))
     betas = np.zeros((3,))
@@ -77,7 +77,7 @@ def record_times_cle(T : float, V : np.array, ks : np.array, save_at_ts : np.arr
     t = 0.
 
     prop_fun(props, X, ks)
-    cs.cle_step_nb_refl(X, t, V, props, delta_t)
+    cs.tau_step_nb_refl(X, t, V, props, delta_t)
 
     times = np.zeros(save_at_ts.size)
 
@@ -85,7 +85,7 @@ def record_times_cle(T : float, V : np.array, ks : np.array, save_at_ts : np.arr
     i = 0
     while t < T:
         prop_fun(props, X, ks)
-        X,t = cs.cle_step_nb_refl(X, t, V, props, delta_t)
+        X,t = cs.tau_step_nb_refl(X, t, V, props, delta_t)
 
         while i < save_at_ts.size and save_at_ts[i] <= t :
            times[i] = time.time() - t0
@@ -109,13 +109,12 @@ def time_lv():
 
     time_dat = np.zeros((N,save_at_ts.size))
     for i in tqdm.tqdm(range(N)):
-        time_dat[i] = record_times_cle(T, V, ks, save_at_ts, delta_t)
+        time_dat[i] = record_times_tau(T, V, ks, save_at_ts, delta_t)
 
-    np.save(f'dat/cle-times', time_dat)
-    np.save(f'dat/cle-save-times', save_at_ts)
+    np.save(f'dat/tau-times', time_dat)
+    np.save(f'dat/tau-save-times', save_at_ts)
 
     return time_dat
-
 
 
 def MC_xp():
@@ -131,7 +130,7 @@ def MC_xp():
     for i in range(N):
         # if (i+1) % 1000 == 0:
         print(f"Iteration {i+1}")
-        X_hist, t_hist = simulate_lv_cle(T, V, ks, save_at_ts, delta_t)
+        X_hist, t_hist = simulate_lv_tau(T, V, ks, save_at_ts, delta_t)
 
         dat[i] = X_hist
 
@@ -139,7 +138,7 @@ def MC_xp():
 
 
 def save_MC_dat(dat: np.array):
-    np.save(f"dat/cle-{dat.shape[0]}-{dat.shape[1]}", dat)
+    np.save(f"dat/tau-{dat.shape[0]}-{dat.shape[1]}", dat)
 
 
 if __name__ == "__main__":

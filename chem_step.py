@@ -41,7 +41,7 @@ def ssa_prop_step(X : np.array, t : float, V : np.array, a : np.array):
     xi1, xi2 = np.random.rand(2)
 
     j = np.argmax(xi1<np.cumsum(a/asum))
-    tau = np.log(1/xi2)/asum
+    tau = -np.log(xi2)/asum
 
     new_X = X + V[:,j]
     new_t = t + tau
@@ -66,6 +66,17 @@ def tau_leap_step_prop(X : np.array,t : float,V : np.array, a : np.array, tau :f
     X = X + V @ pjs
     new_t = t+tau
     return X, new_t
+
+@jit(nopython=True)
+def tau_step_nb_refl(X : np.array,t : float,V : np.array, a : np.array, tau :float):
+
+    pjs = np.zeros((len(a),)) ### this wordy expansion to make it numba-compatible
+    atau = a * tau
+    for i in range(len(a)):
+        pjs[i] = np.random.poisson(atau[i])
+    X = X + V @ pjs
+    new_t = t+tau
+    return np.abs(X), new_t
 
 def cle_step(X,t, V, propensity_f,tau):
     a = propensity_f(X)
@@ -257,7 +268,7 @@ def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
 
     # jump-tau-leap
     else:
-        props_ssa = beta * props_rint ## need to make sure this guy makes what it claims it does
+        props_ssa = beta * props_rint
         a0_prime = np.sum(props_ssa)
 
         xi1, xi2 = np.random.rand(2)
