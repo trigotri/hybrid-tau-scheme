@@ -144,6 +144,7 @@ def simulate_extinction_time_hcle_path(
 ):
 
     props = np.zeros((2,))
+    props_Xrint = np.zeros((2,))
     betas = np.zeros((2,))
     K, c1 = css
 
@@ -155,8 +156,9 @@ def simulate_extinction_time_hcle_path(
 
     while X[0] > 0.0:
         prop_fun(props, X, css)
+        prop_fun(props_Xrint, np.rint(X), css)
         compute_betas(betas, X, I1, I2)
-        X, t = cs.hybrid1_cle_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+        X, t = cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
         X_hist.append(X)
         t_hist.append(t)
 
@@ -235,6 +237,7 @@ def simulate_extinction_time_hcle(
 ):
 
     props = np.zeros((2,))
+    props_Xrint = np.zeros((2,))
     betas = np.zeros((2,))
     K, c1 = css
 
@@ -244,8 +247,9 @@ def simulate_extinction_time_hcle(
     i = 0
     while X[0] > 0.0:
         prop_fun(props, X, css)
+        prop_fun(props_Xrint, np.rint(X), css)
         compute_betas(betas, X, I1, I2)
-        X, t = cs.hybrid1_cle_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+        X, t = cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
 
     return t
 
@@ -404,40 +408,43 @@ def MET_CME(n: int, K: int, c1: float):
 
     return met
 
-
-if __name__ == "__main__":
+def qq_and_densities():
+    
     K = 50
-    npaths = 100000
+    npaths = 1000
 
-    delta_t, Delta_t = 1e-1, 1e-1
+    delta_t, Delta_t = 1e-3, 1e-3
     c1 = 10
     I1 = 5
     I2 = 7
 
-    compute_data = False
+    compute_data = True
 
     names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
     labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
 
     rs, V, css = define_system(K, c1)
     if compute_data:
-        ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
-        ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
-        ET_ht, t_ht = compute_extinction_times_npaths_htau(
-            npaths, css, V, I1, I2, delta_t, Delta_t
-        )
+        #ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
+        #ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
+        #ET_ht, t_ht = compute_extinction_times_npaths_htau(
+        #    npaths, css, V, I1, I2, delta_t, Delta_t
+        #)
         ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(
             npaths, css, V, I1, I2, delta_t, Delta_t
         )
-        ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
+        #ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
 
-        for ET, t, name in zip(
-            [ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle],
-            [t_ssa, t_ht, t_tau, t_hcle, t_cle],
-            names_algs,
-        ):
-            np.save(f"./dat/{name}-ET", ET)
-            np.save(f"./dat/{name}-t", np.array([t]))
+        #for ET, t, name in zip(
+        #    [ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle],
+        #    [t_ssa, t_ht, t_tau, t_hcle, t_cle],
+        #    names_algs,
+        #):
+        #   np.save(f"./dat/{name}-ET", ET)
+        #   np.save(f"./dat/{name}-t", np.array([t]))
+        name="H-CLE"
+        np.save(f"./dat/{name}-ET", ET_hcle)
+        np.save(f"./dat/{name}-t", np.array([t_hcle]))
 
     ETs = []
     ts = []
@@ -512,7 +519,7 @@ if __name__ == "__main__":
     plt.legend(labels_algs, loc="upper left")
     plt.tight_layout()
     plt.savefig("./dat/met-densities.pdf", format="pdf")
-    # plt.show()
+    plt.show()
 
     # start time-scale at 10^{-1}, tau step --> done
     # for consistency, have added corrections to Fig 3 & 4
@@ -532,7 +539,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
     plt.savefig("./dat/met-qq.png", format="png")
-    # plt.show()
+    plt.show()
 
     if True:
         print("Alg.\tMean\t\tStd\t\tAvg sim. time\tRatio SSA")
@@ -542,3 +549,61 @@ if __name__ == "__main__":
             ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"],
         ):
             print(f"{na}\t{ET.mean():5e}\t{ET.std():5e}\t{t/npaths:5e}\t{t_ssa/t:<5g}")
+
+
+def xp2():
+
+    K = 50
+    npaths = 1000
+
+    delta_t, Delta_t = 3e-1, 3e-1
+    c1 = 10
+    I1 = 1
+    I2 = 3
+
+    compute_data = True
+
+    names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
+    labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
+
+    rs, V, css = define_system(K, c1)
+    if compute_data:
+        ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
+        ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(
+            npaths, css, V, I1, I2, delta_t, Delta_t
+        )
+        ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
+
+
+    plt.figure()
+    plt.hist(
+        np.log(ET_ssa),
+        bins=1000,
+        histtype="step",
+        range=[-np.log(10), 4.7 * np.log(10)],
+        density=True,
+        cumulative=True,
+    )
+    plt.hist(
+        np.log(ET_hcle),
+        bins=1000,
+        histtype="step",
+        range=[-np.log(10), 4.7 * np.log(10)],
+        density=True,
+        cumulative=True,
+    )
+    plt.hist(
+        np.log(ET_cle),
+        bins=1000,
+        histtype="step",
+        range=[-np.log(10), 4.7 * np.log(10)],
+        density=True,
+        cumulative=True
+    )
+
+    plt.legend(["SSA", "H CLE", "CLE"])
+
+    plt.show()
+
+if __name__ == "__main__":
+    qq_and_densities()

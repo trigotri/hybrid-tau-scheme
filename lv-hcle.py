@@ -61,7 +61,7 @@ def compute_betas(betas : np.array, X : np.array, I1A : float, I2A: float, I1B: 
 def simulate_lv_hcle(T : float, V : np.array, ks : np.array, save_at_ts : np.array, I1A : float, I2A : float, I1B : float, I2B : float, delta_t : float, Delta_t : float):
 
     props = np.zeros((3,))
-    props_rint = np.zeros((3,))
+    props_Xrint = np.zeros((3,))
     betas = np.zeros((3,))
 
     X = np.array([50.,60.])
@@ -72,10 +72,9 @@ def simulate_lv_hcle(T : float, V : np.array, ks : np.array, save_at_ts : np.arr
     i = 0
     while t < T:
         prop_fun(props, X, ks)
-        prop_fun(props_rint, np.rint(X), ks)
+        prop_fun(props_Xrint, np.rint(X), ks)
         compute_betas(betas, X, I1A, I2A, I1B, I2B)
-        #X,t = cs.hybrid1_tau_step_numba(X, t, V, props, props_rint, betas, delta_t, Delta_t)
-        X,t = cs.hybrid1_cle_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+        X,t = cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
 
         while save_at_ts[i] <= t and i < save_at_ts.size:
            X_hist[i] = X
@@ -97,14 +96,16 @@ def single_launch():
 def record_times_hcle(T : float, V : np.array, ks : np.array, save_at_ts : np.array, I1A : float, I2A : float, I1B : float, I2B : float, delta_t : float, Delta_t : float):
 
     props = np.zeros((3,))
+    props_Xrint = np.zeros((3,))
     betas = np.zeros((3,))
 
     X = np.array([50.,60.])
     t = 0.
 
     prop_fun(props, X, ks)
+    prop_fun(props_Xrint, np.rint(X), ks)
     compute_betas(betas, X, I1A, I2A, I1B, I2B)
-    cs.hybrid1_tau_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+    cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
 
     times = np.zeros(save_at_ts.size)
 
@@ -113,7 +114,8 @@ def record_times_hcle(T : float, V : np.array, ks : np.array, save_at_ts : np.ar
     while t < T:
         prop_fun(props, X, ks)
         compute_betas(betas, X, I1A, I2A, I1B, I2B)
-        X,t = cs.hybrid1_tau_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+        prop_fun(props_Xrint, Xrint, ks)
+        X,t = cs.hybrid1_cle_step_numba(X, t, V, props, betas, delta_t, Delta_t)
 
         while i < save_at_ts.size and save_at_ts[i] <= t :
            times[i] = time.time() - t0
@@ -171,6 +173,6 @@ def save_MC_dat(dat : np.array):
 
 if __name__ == '__main__':
     #single_launch()
-    #dat,save_at_ts = MC_xp()
-    #save_MC_dat(dat)
+    dat,save_at_ts = MC_xp()
+    save_MC_dat(dat)
     time_lv()

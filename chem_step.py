@@ -234,7 +234,6 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
         xi1, xi2 = np.random.rand(2)
         tau = -np.log(xi2)/a0_prime if a0_prime > 0 else Delta_t
-        #print(tau) if verbose else None
 
         props_tau =  (1.-beta)*props
         if tau < Delta_t:
@@ -251,12 +250,11 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
 
 @jit(nopython=True)
-def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
+def hybrid1_cle_step_numba(X,t,V, props, props_Xrint, beta, delta_t, Delta_t):
     '''
     First running version of the Hybrid-CLE (numba-compatible).
     Props are the already-computed propensities.
     '''
-    props_rint = np.rint(props)
 
     # CLE step
     if np.amax(beta) == 0:
@@ -264,11 +262,12 @@ def hybrid1_cle_step_numba(X,t,V, props, beta, delta_t, Delta_t):
 
     # SSA
     elif np.amin(beta) == 1:
-        new_X, new_t = ssa_prop_step(X, t, V, props_rint)
+        new_X, new_t = ssa_prop_step(X, t, V, props_Xrint)
+        
 
     # jump-tau-leap
     else:
-        props_ssa = beta * props_rint
+        props_ssa = beta * props_Xrint
         a0_prime = np.sum(props_ssa)
 
         xi1, xi2 = np.random.rand(2)
