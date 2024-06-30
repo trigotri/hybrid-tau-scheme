@@ -3,3 +3,8 @@ tags
 
 __pycache__/*
 dat/*
+
+!dat/ags/
+
+dat/ags/*
+!dat/ags/*.py
