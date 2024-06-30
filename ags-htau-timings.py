@@ -167,7 +167,7 @@ def xp1():
 
     T = 1e3
     rs, V, css = define_system()
-    Npaths = 100
+    Npaths = 1000
 
     for i, IS in enumerate(ISs):
         for j, TSS in enumerate(TSSs):

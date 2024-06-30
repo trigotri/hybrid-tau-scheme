@@ -413,38 +413,35 @@ def qq_and_densities():
     K = 50
     npaths = 1000
 
-    delta_t, Delta_t = 1e-3, 1e-3
+    delta_t, Delta_t = 1e-1, 1e-1
     c1 = 10
     I1 = 5
     I2 = 7
 
-    compute_data = True
+    compute_data = False
 
     names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
     labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
 
     rs, V, css = define_system(K, c1)
     if compute_data:
-        #ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
-        #ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
-        #ET_ht, t_ht = compute_extinction_times_npaths_htau(
-        #    npaths, css, V, I1, I2, delta_t, Delta_t
-        #)
+        ET_ssa, t_ssa = compute_extinction_times_npaths_ssa(npaths, css, V)
+        ET_tau, t_tau = compute_extinction_times_npaths_tau(npaths, css, V, delta_t)
+        ET_ht, t_ht = compute_extinction_times_npaths_htau(
+            npaths, css, V, I1, I2, delta_t, Delta_t
+        )
         ET_hcle, t_hcle = compute_extinction_times_npaths_hcle(
             npaths, css, V, I1, I2, delta_t, Delta_t
         )
-        #ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
+        ET_cle, t_cle = compute_extinction_times_npaths_cle(npaths, css, V, delta_t)
 
-        #for ET, t, name in zip(
-        #    [ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle],
-        #    [t_ssa, t_ht, t_tau, t_hcle, t_cle],
-        #    names_algs,
-        #):
-        #   np.save(f"./dat/{name}-ET", ET)
-        #   np.save(f"./dat/{name}-t", np.array([t]))
-        name="H-CLE"
-        np.save(f"./dat/{name}-ET", ET_hcle)
-        np.save(f"./dat/{name}-t", np.array([t_hcle]))
+        for ET, t, name in zip(
+            [ET_ssa, ET_ht, ET_tau, ET_hcle, ET_cle],
+            [t_ssa, t_ht, t_tau, t_hcle, t_cle],
+            names_algs,
+        ):
+           np.save(f"./dat/{name}-ET", ET)
+           np.save(f"./dat/{name}-t", np.array([t]))
 
     ETs = []
     ts = []
@@ -453,14 +450,14 @@ def qq_and_densities():
         ts.append(np.load(f"./dat/{name}-t.npy"))
 
     ET_ssa = ETs[0]
-    ET_tau = ETs[2]
     ET_ht = ETs[1]
+    ET_tau = ETs[2]
     ET_hcle = ETs[3]
     ET_cle = ETs[4]
 
     t_ssa = ts[0][0]
-    t_tau = ts[2][0]
     t_ht = ts[1][0]
+    t_tau = ts[2][0]
     t_hcle = ts[3][0]
     t_cle = ts[4][0]
 
@@ -554,7 +551,7 @@ def qq_and_densities():
 def xp2():
 
     K = 50
-    npaths = 1000
+    npaths = 100
 
     delta_t, Delta_t = 3e-1, 3e-1
     c1 = 10

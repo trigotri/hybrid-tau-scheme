@@ -114,8 +114,8 @@ def record_times_hcle(T : float, V : np.array, ks : np.array, save_at_ts : np.ar
     while t < T:
         prop_fun(props, X, ks)
         compute_betas(betas, X, I1A, I2A, I1B, I2B)
-        prop_fun(props_Xrint, Xrint, ks)
-        X,t = cs.hybrid1_cle_step_numba(X, t, V, props, betas, delta_t, Delta_t)
+        prop_fun(props_Xrint, np.rint(X), ks)
+        X,t = cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
 
         while i < save_at_ts.size and save_at_ts[i] <= t :
            times[i] = time.time() - t0
