@@ -114,6 +114,24 @@ def simulate_extinction_time_ssa_path(V: np.array, css: tuple):
 
     return X_hist, t_hist
 
+def simulate_extinction_time_cle_path(V: np.array, css: tuple, tau : float):
+    props = np.zeros((2,))
+    K, c1 = css
+
+    X = np.array([float(c1)])
+    t = 0.0
+
+    X_hist = []
+    t_hist = []
+
+    while X[0] > 0.0:
+        prop_fun(props, X, css)
+        X, t = cs.cle_step_numba(X, t, V, props, tau)
+        X_hist.append(X)
+        t_hist.append(t)
+
+    return X_hist, t_hist
+
 
 def simulate_extinction_time_ht_path(
     V: np.array, css: tuple, I1: float, I2: float, delta_t: float, Delta_t: float
@@ -245,11 +263,12 @@ def simulate_extinction_time_hcle(
     t = 0.0
 
     i = 0
-    while X[0] > 0.0:
+    while X[0] > 0.5:
         prop_fun(props, X, css)
         prop_fun(props_Xrint, np.rint(X), css)
         compute_betas(betas, X, I1, I2)
         X, t = cs.hybrid1_cle_step_numba(X, t, V, props, props_Xrint, betas, delta_t, Delta_t)
+        #print(X)
 
     return t
 
@@ -377,7 +396,7 @@ def xp1():
     np.save("dat/met-ht-times", METs_ht)
 
 
-def xp2(show=False):
+def xp2_old(show=False):
 
     plt.rcParams.update({"font.size": 16})
 
@@ -411,14 +430,14 @@ def MET_CME(n: int, K: int, c1: float):
 def qq_and_densities():
     
     K = 50
-    npaths = 1000
+    npaths = 10000
 
     delta_t, Delta_t = 1e-1, 1e-1
     c1 = 10
     I1 = 5
     I2 = 7
 
-    compute_data = False
+    compute_data = True
 
     names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
     labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
@@ -553,10 +572,10 @@ def xp2():
     K = 50
     npaths = 100
 
-    delta_t, Delta_t = 3e-1, 3e-1
+    delta_t, Delta_t = 1e-1, 1e-1
     c1 = 10
-    I1 = 1
-    I2 = 3
+    I1 = 5
+    I2 = 7
 
     compute_data = True
 
@@ -602,5 +621,77 @@ def xp2():
 
     plt.show()
 
+
+def xp3():
+
+    K = 50
+    npaths = 100
+
+    delta_t, Delta_t = 1e-1, 1e-1
+    c1 = 10
+    I1 = 5
+    I2 = 7
+
+    compute_data = True
+
+    names_algs = ["SSA", "H-tau", "Tau-L", "H-CLE", "CLE"]
+    labels_algs = ["SSA", "H $\\tau$", "$\\tau$-leap", "H CLE", "CLE"]
+
+    rs, V, css = define_system(K, c1)
+    if compute_data:
+        Xhist_ssa, thist_ssa = simulate_extinction_time_ssa_path(V, css)
+        Xhist_hcle, thist_hcle = simulate_extinction_time_hcle_path(V, css, I1, I2, delta_t, Delta_t)
+        Xhist_cle, thist_cle = simulate_extinction_time_cle_path(V, css, delta_t)
+
+    plt.figure()
+    plt.plot(thist_ssa, Xhist_ssa, '.', label="SSA")
+    plt.plot(thist_hcle, Xhist_hcle, '.',  label="H CLE")
+    plt.plot(thist_cle, Xhist_cle, '.', label="CLE")
+    plt.legend()
+    plt.show()
+
+    return np.array(Xhist_ssa), thist_ssa, np.array(Xhist_hcle), thist_hcle, np.array(Xhist_cle), thist_cle
+
 if __name__ == "__main__":
     qq_and_densities()
+    #Xhist_ssa, thist_ssa, Xhist_hcle, thist_hcle, Xhist_cle, thist_cle = xp3()
+    #xp2()
+
+    #x = np.linspace(0,21,200)
+    #c1 = 10.
+    #Pup_ssa = c1 / (c1 + x)
+
+    #from scipy.special import erf
+    #def Phi(x):
+    #    return .5 * (1. + erf(x/np.sqrt(2)))
+    #dt = .1
+    #Pup_cle = Phi(np.sqrt(.1) * (np.sqrt(c1) - np.sqrt(x)) / 2)
+
+    #I1 = 5
+    #I2 = 7
+    #Pup_hcle = 1. * (x <= I1) * c1 / (c1 + x)
+    #beta = np.logical_and(x > I1, x < I2) * (I2 - x) / (I2-I1)
+
+
+    #Pup_hcle += np.logical_and(x > I1, x < I2) * \
+    #            ((1 - np.exp(- beta*(c1 + x)*dt)) * Phi((c1-x)*dt / np.sqrt((c1+x)*dt) ) \
+    #            + np.exp(- beta * (c1 + x)*dt) * x / (c1 + x) * Phi( (-1./(1.-beta) + beta * (c1-x)*dt) / np.sqrt((c1+x)*dt)  ) \
+    #            + np.exp(-beta * (c1 + x)*dt) * c1 / (c1 + x) * Phi( (1./(1.-beta) + beta * (c1-x)*dt) / np.sqrt((c1+x)*dt)  ))
+
+    #Pup_hcle += (x>=I2)*Phi(np.sqrt(.1) * (np.sqrt(c1) - np.sqrt(x)) / 2)
+
+    #plt.plot(x, Pup_ssa, label='SSA')
+    #plt.plot(x, Pup_cle, label='CLE')
+    #plt.plot(x, Pup_hcle, label='H CLE')
+    #plt.legend()
+    #plt.show()
+
+    #cPup_ssa = np.cumsum(Pup_ssa)
+    #cPup_cle = np.cumsum(Pup_cle)
+    #cPup_hcle = np.cumsum(Pup_hcle)
+
+    #plt.plot(x, cPup_ssa/cPup_ssa[-1], label='SSA')
+    #plt.plot(x, cPup_cle/cPup_cle[-1], label='CLE')
+    #plt.plot(x, cPup_hcle/cPup_hcle[-1], label='H CLE')
+    #plt.legend()
+    #plt.show()
