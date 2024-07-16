@@ -129,9 +129,9 @@ def xp2(show=False):
     X_hist, t_hist = simulate_ags_ssa(T, V, css)
 
     plt.figure(figsize=(10,6))
-    plt.fill_between(t_hist, 5, 10, alpha=.4, label='IS 1')
-    plt.fill_between(t_hist, 10, 15, alpha=.4, label='IS 2')
-    plt.fill_between(t_hist, 15, 20,  alpha=.4, label='IS 3')
+    plt.fill_between(t_hist, 5, 10, alpha=.4, label='BR 1')
+    plt.fill_between(t_hist, 10, 15, alpha=.4, label='BR 2')
+    plt.fill_between(t_hist, 15, 20,  alpha=.4, label='BR 3')
 
     plt.plot(t_hist, X_hist, label=["DNA", "DNA0", "P", "mRNA"])
     plt.grid()
@@ -146,7 +146,7 @@ def xp3():
 
     T = 1e3
     rs, V, css = define_system()
-    Npaths = 1000
+    Npaths = 100
 
     simulate_ags_ssa_final_time(T, V, css)
 
@@ -159,5 +159,4 @@ def xp3():
 
 if __name__ == "__main__":
     # rs, V, css = define_system() 
-    # xp1()
-    xp3()
+    xp2(True)

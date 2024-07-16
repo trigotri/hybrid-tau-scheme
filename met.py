@@ -418,15 +418,6 @@ def xp2_old(show=False):
     plt.show() if show else None
 
 
-# not working as of yet
-def MET_CME(n: int, K: int, c1: float):
-    met = 0
-    for m in range(1, n + 1):
-        for j in range(K - m + 2):
-            met += factorial(m - 1) / (factorial(j + m - 1) * c1**j)
-
-    return met
-
 def qq_and_densities():
     
     K = 50
@@ -536,10 +527,6 @@ def qq_and_densities():
     plt.tight_layout()
     plt.savefig("./dat/met-densities.pdf", format="pdf")
     plt.show()
-
-    # start time-scale at 10^{-1}, tau step --> done
-    # for consistency, have added corrections to Fig 3 & 4
-    # add CLE lines --> done, but not logical wrt H-CLE & SSA
 
     indxs = [k for k in range(0, npaths, 1)]
     plt.figure()
@@ -657,41 +644,3 @@ if __name__ == "__main__":
     #Xhist_ssa, thist_ssa, Xhist_hcle, thist_hcle, Xhist_cle, thist_cle = xp3()
     #xp2()
 
-    #x = np.linspace(0,21,200)
-    #c1 = 10.
-    #Pup_ssa = c1 / (c1 + x)
-
-    #from scipy.special import erf
-    #def Phi(x):
-    #    return .5 * (1. + erf(x/np.sqrt(2)))
-    #dt = .1
-    #Pup_cle = Phi(np.sqrt(.1) * (np.sqrt(c1) - np.sqrt(x)) / 2)
-
-    #I1 = 5
-    #I2 = 7
-    #Pup_hcle = 1. * (x <= I1) * c1 / (c1 + x)
-    #beta = np.logical_and(x > I1, x < I2) * (I2 - x) / (I2-I1)
-
-
-    #Pup_hcle += np.logical_and(x > I1, x < I2) * \
-    #            ((1 - np.exp(- beta*(c1 + x)*dt)) * Phi((c1-x)*dt / np.sqrt((c1+x)*dt) ) \
-    #            + np.exp(- beta * (c1 + x)*dt) * x / (c1 + x) * Phi( (-1./(1.-beta) + beta * (c1-x)*dt) / np.sqrt((c1+x)*dt)  ) \
-    #            + np.exp(-beta * (c1 + x)*dt) * c1 / (c1 + x) * Phi( (1./(1.-beta) + beta * (c1-x)*dt) / np.sqrt((c1+x)*dt)  ))
-
-    #Pup_hcle += (x>=I2)*Phi(np.sqrt(.1) * (np.sqrt(c1) - np.sqrt(x)) / 2)
-
-    #plt.plot(x, Pup_ssa, label='SSA')
-    #plt.plot(x, Pup_cle, label='CLE')
-    #plt.plot(x, Pup_hcle, label='H CLE')
-    #plt.legend()
-    #plt.show()
-
-    #cPup_ssa = np.cumsum(Pup_ssa)
-    #cPup_cle = np.cumsum(Pup_cle)
-    #cPup_hcle = np.cumsum(Pup_hcle)
-
-    #plt.plot(x, cPup_ssa/cPup_ssa[-1], label='SSA')
-    #plt.plot(x, cPup_cle/cPup_cle[-1], label='CLE')
-    #plt.plot(x, cPup_hcle/cPup_hcle[-1], label='H CLE')
-    #plt.legend()
-    #plt.show()

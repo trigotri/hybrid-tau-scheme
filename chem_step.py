@@ -59,7 +59,7 @@ def tau_leap_step(X,t,V,propensity_f,tau):
 @jit(nopython=True)
 def tau_leap_step_prop(X : np.array,t : float,V : np.array, a : np.array, tau :float):
 
-    pjs = np.zeros((len(a),)) ### this wordy expansion to make it numba-compatible
+    pjs = np.zeros((len(a),))
     atau = a * tau
     for i in range(len(a)):
         pjs[i] = np.random.poisson(atau[i])
@@ -70,7 +70,7 @@ def tau_leap_step_prop(X : np.array,t : float,V : np.array, a : np.array, tau :f
 @jit(nopython=True)
 def tau_step_nb_refl(X : np.array,t : float,V : np.array, a : np.array, tau :float):
 
-    pjs = np.zeros((len(a),)) ### this wordy expansion to make it numba-compatible
+    pjs = np.zeros((len(a),))
     atau = a * tau
     for i in range(len(a)):
         pjs[i] = np.random.poisson(atau[i])
@@ -96,7 +96,6 @@ def cle_step_nb_refl(X : np.array, t : float, V : np.array, props : np.array, ta
 
     new_t = t+tau
 
-    # because Numba doesn't let you do it easily
     zjs = np.zeros((m,))
     for j in range(m):
         zjs[j] = np.random.randn()
@@ -111,10 +110,8 @@ def cle_step_nb_refl(X : np.array, t : float, V : np.array, props : np.array, ta
 def cle_step_numba(X : np.array, t : float, V : np.array, props : np.array, tau : float):
 
     m = V.shape[1]
-
     new_t = t+tau
 
-    # because Numba doesn't let you do it easily
     zjs = np.zeros((m,))
     for j in range(m):
         zjs[j] = np.random.randn()
@@ -229,7 +226,7 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
     # jump-tau-leap
     else:
-        props_ssa = beta * props ## need to make sure this guy makes what it claims it does
+        props_ssa = beta * props 
         a0_prime = np.sum(props_ssa)
 
         xi1, xi2 = np.random.rand(2)
@@ -237,14 +234,12 @@ def hybrid1_tau_step_numba(X,t,V, props, beta, delta_t, Delta_t, verbose=False):
 
         props_tau =  (1.-beta)*props
         if tau < Delta_t:
-            #print("blocking") if verbose else None
             j = np.argmax(xi1<np.cumsum(props_ssa/a0_prime))
             new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, tau)
             new_X = new_X + V[:,j]
 
         else:
             new_X, new_t = tau_leap_step_prop(X, t, V, props_tau, Delta_t)
-            #print("skipping") if verbose else None
 
     return new_X, new_t
 
@@ -264,7 +259,6 @@ def hybrid1_cle_step_numba(X,t,V, props, props_Xrint, beta, delta_t, Delta_t):
     elif np.amin(beta) == 1:
         new_X, new_t = ssa_prop_step(X, t, V, props_Xrint)
         
-
     # jump-tau-leap
     else:
         props_ssa = beta * props_Xrint
@@ -276,7 +270,7 @@ def hybrid1_cle_step_numba(X,t,V, props, props_Xrint, beta, delta_t, Delta_t):
         props_cle =  (1.-beta)*props
         if tau < Delta_t:
             j = np.argmax(xi1<np.cumsum(props_ssa/a0_prime))
-            new_X, new_t = cle_step_numba(X, t, V, props_cle, tau) # if somwething goes wrong, it is here...
+            new_X, new_t = cle_step_numba(X, t, V, props_cle, tau)             
             new_X = new_X + V[:,j]
 
         else:
@@ -307,13 +301,9 @@ def hybrid_alg1_method(X,t,V,propensity_f, beta_f, delta_t, Delta_t):
         a_prime = beta * propensity_f(np.rint(X))
         a0_prime = np.sum(a_prime)
 
-        #print('beta ', beta)
-        #print('a\' ', a_prime)
-
         xi1, xi2 = rng.uniform(size=(2,))
         tau = -np.log(xi2)/a0_prime if a0_prime > 0 else Delta_t
 
-        #print('tau ', tau)
 
         if tau < Delta_t:
             j = np.argmax(xi1*a0_prime<np.cumsum(a_prime))

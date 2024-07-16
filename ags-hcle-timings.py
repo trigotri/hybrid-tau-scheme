@@ -10,6 +10,9 @@ def hcle_params():
 
     ISs = ((5, 10), (10, 15), (15, 20))
     TSSs = ((2e-1, 1.5e-1), (1, 0.4))
+    
+    ISs = ((1.5, 2.5),)
+    TSSs = ((2e-1, 1.5e-1), (1, 0.4))
 
     return ISs, TSSs
 
@@ -171,7 +174,7 @@ def xp1():
 
     T = 1e3
     rs, V, css = define_system()
-    Npaths = 1000
+    Npaths = 100
 
     for i, IS in enumerate(ISs):
         for j, TSS in enumerate(TSSs):
@@ -202,7 +205,7 @@ def xp3():
 
     T = 1e3
     rs, V, css = define_system()
-    Npaths = 1000
+    Npaths = 100
 
     simulate_ags_hcle_final_time(T, V, css, ISs[0], TSSs[0])
 
